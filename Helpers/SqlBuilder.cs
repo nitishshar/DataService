@@ -108,7 +108,7 @@ namespace DataService.Helpers
         {
             //for ORACLE return " OFFSET " + startRow + " ROWS FETCH NEXT " + (endRow - startRow + 1) + " ROWS ONLY";
             // For MySQL
-            return " LIMIT " + startRow + " , " + (endRow - startRow + 1);
+            return " LIMIT " + startRow + " , " + (endRow - startRow);
         }
         public string createFilterSql(string key, dynamic item)
         {

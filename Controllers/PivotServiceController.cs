@@ -20,7 +20,7 @@ namespace DataService.Controllers
 
         // POST api/getRows
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] object request)
+        public async Task<IActionResult> Post([FromBody] Request request)
         {
 
             await Db.Connection.OpenAsync();
@@ -28,9 +28,9 @@ namespace DataService.Controllers
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true
-            };
-            var obRequest = JsonSerializer.Deserialize<Request>(request.ToString(), options);
-            var response = await pivotApi.GetRows(obRequest);
+                
+            };           
+            var response = await pivotApi.GetRows(request);
             return new OkObjectResult(response);
         }
 
