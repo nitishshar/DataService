@@ -1,6 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Data.Odbc;
+using System.Dynamic;
+using System.ComponentModel;
+using System.Threading.Tasks;
+using System.Data;
+using System.Data.Common;
 
 namespace DataService.Helpers
 {
@@ -93,6 +99,64 @@ namespace DataService.Helpers
                     enumeratorB.MoveNext();
                     yield return func(enumeratorA.Current, enumeratorB.Current);
                 }
+            }
+        }
+        public static async Task<IEnumerable<TResult>> SelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> method)
+        {
+            return await Task.WhenAll(source.Select(async s => await method(s)));
+        }
+        public static async Task<IEnumerable<T>> WhenAll<T>(this IEnumerable<Task<T>> tasks)
+        {
+            return await Task.WhenAll(tasks);
+        }
+        public static Task ForEachAsync<T>(this IEnumerable<T> enumerable, Func<T, Task> action)
+        {
+            return Task.WhenAll(enumerable.Select(item => action(item)));
+        }
+
+        public static async Task<IEnumerable<T1>> SelectManyAsync<T, T1>(this IEnumerable<T> enumeration, Func<T, Task<IEnumerable<T1>>> func)
+        {
+            return (await Task.WhenAll(enumeration.Select(func))).SelectMany(s => s);
+        }
+        public async static Task<List<Dictionary<string, object>>> ReadAsync(DbDataReader reader)
+        {
+            var res = new List<Dictionary<string, object>>();
+            using (reader)
+            {
+                if (reader.HasRows)
+                {
+                    DataTable schemaTable = reader.GetSchemaTable();
+                    var columns = new List<string>();
+                    foreach (DataRow row in schemaTable.Rows)
+                    {
+                        columns.Add(row[0].ToString());
+                    }
+                    while (await reader.ReadAsync())
+                    {
+                        Dictionary<string, object> expando = new Dictionary<string, object>();
+                        columns.ForEach(column =>
+                        {
+                            expando.Add(column, reader[column]);
+                        });
+                        res.Add(expando);
+                    }
+                }
+                return res;
+            }
+        }
+        public async static Task<List<string>> ReadDistinctAsync(DbDataReader reader)
+        {
+            var res = new List<string>();
+            using (reader)
+            {
+                if (reader.HasRows)
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        res.Add(reader.GetString(0));
+                    }
+                }
+                return res;
             }
         }
     }

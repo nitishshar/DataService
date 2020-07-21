@@ -22,21 +22,38 @@ namespace DataService.Helpers
 
         public string CreateSQL(Request request, string tableName, Dictionary<string, List<string>> pivotValues)
         {
-            this.valueColumns = request.getValueCols();
-            this.pivotColumns = request.getPivotCols();
-            this.groupKeys = request.getGroupKeys();
-            this.rowGroupCols = request.getRowGroupCols();
+            this.valueColumns = request.ValueCols;
+            this.pivotColumns = request.PivotCols;
+            this.groupKeys = request.GroupKeys;
+            this.rowGroupCols = request.RowGroupCols;
             this.pivotValues = pivotValues;
-            this.isPivotMode = request.isPivotMode();
+            this.isPivotMode = request.PivotMode;
             this.rowGroups = getRowGroups();
             this.rowGroupsToInclude = getRowGroupsToInclude();
             this.isGrouping = rowGroups.Count > groupKeys.Count;
-            this.filterModel = request.getFilterModel();
-            this.sortModel = request.getSortModel();
-            this.startRow = request.getStartRow();
-            this.endRow = request.getEndRow();
+            this.filterModel = request.FilterModel;
+            this.sortModel = request.SortModel;
+            this.startRow = request.StartRow;
+            this.endRow = request.EndRow;
 
             return selectSql() + fromSql(tableName) + whereSql() + groupBySql() + orderBySql() + limitSql();
+        }
+        public string WhereSQL(Request request, string tableName)
+        {
+            this.valueColumns = request.ValueCols;
+            this.pivotColumns = request.PivotCols;
+            this.groupKeys = request.GroupKeys;
+            this.rowGroupCols = request.RowGroupCols;
+            this.isPivotMode = request.PivotMode;
+            this.rowGroups = getRowGroups();
+            this.rowGroupsToInclude = getRowGroupsToInclude();
+            this.isGrouping = rowGroups.Count > groupKeys.Count;
+            this.filterModel = request.FilterModel;
+            this.sortModel = request.SortModel;
+            this.startRow = request.StartRow;
+            this.endRow = request.EndRow;
+
+            return whereSql();
         }
 
         private string selectSql()
@@ -48,7 +65,7 @@ namespace DataService.Helpers
             }
             else
             {
-                List<string> valueCols = valueColumns.Select(valueCol => valueCol.getAggFunc() + '(' + valueCol.getField() + ") as " + valueCol.getField()).ToList();
+                List<string> valueCols = valueColumns.Select(valueCol => valueCol.AggFunc + '(' + valueCol.Field + ") as " + valueCol.Field).ToList();
 
                 selectCols = (rowGroupsToInclude.Concat(valueCols)).ToList();
             }
@@ -74,13 +91,13 @@ namespace DataService.Helpers
 
         private string orderBySql()
         {
-            Func<SortModel, string> orderByMapper = model => model.getColId() + " " + model.getSort();
+            Func<SortModel, string> orderByMapper = model => model.ColId + " " + model.Sort;
 
             bool isDoingGrouping = rowGroups.Count > groupKeys.Count;
             int num = isDoingGrouping ? groupKeys.Count + 1 : Int32.MaxValue;
 
             List<string> orderByCols = sortModel
-                    .Where(model => !isDoingGrouping || rowGroups.Contains(model.getColId()))
+                    .Where(model => !isDoingGrouping || rowGroups.Contains(model.ColId))
                     .Select(orderByMapper)
                     .Take(num).ToList();
 
@@ -178,19 +195,19 @@ namespace DataService.Helpers
         private Func<string, SetColumnFilter, string> setFilter()
         {
             return (string columnName, SetColumnFilter filter) =>
-                    columnName + (filter.getValues().Count == 0 ? " IN ('') " : " IN " + asstring(filter.getValues()));
+                    columnName + (filter.Values.Count == 0 ? " IN ('') " : " IN " + asstring(filter.Values));
         }
 
         private Func<string, NumberColumnFilter, string> numberFilter()
         {
             return (string columnName, NumberColumnFilter filter) =>
             {
-                int filterValue = filter.getFilter();
-                string filerType = filter.getType();
+                int filterValue = filter.Filter;
+                string filerType = filter.FilterType;
                 string op = this.operatorMap[filerType];
 
                 return columnName + (filerType.Equals("inRange") ?
-                        " BETWEEN " + filterValue + " AND " + filter.getFilterTo() : " " + op + " " + filterValue);
+                        " BETWEEN " + filterValue + " AND " + filter.FilterTo : " " + op + " " + filterValue);
             };
         }
 
@@ -201,14 +218,14 @@ namespace DataService.Helpers
 
             return pivotPairs.CartesianProduct().ToList().SelectMany(pairs =>
             {
-                string pivotColStr = string.Join("_", pairs.Select(pairs => pairs.Value));
-                string decodeStr = string.Join(",", pairs.Select(pair => "DECODE(" + pair.Key + ", '" + pair.Value + "'"));
+                string pivotColStr = string.Join("_", pairs.Select(pr => pr.Value));
+                string decodeStr = string.Join(",", pairs.Select(pair => "IF(" + pair.Key + ", '" + pair.Value + "'"));
 
                 string closingBrackets = string.Join("", Enumerable.Range(0, pairs.Count() + 1).Select(i => ")"));
 
 
-                return valueColumns.Select(valueCol => valueCol.getAggFunc() + "(" + decodeStr + ", " + valueCol.getField() +
-                                closingBrackets + " \"" + pivotColStr + "_" + valueCol.getField() + "\"");
+                return valueColumns.Select(valueCol => valueCol.AggFunc + "(" + decodeStr + ", " + valueCol.Field +
+                                closingBrackets + " \"" + pivotColStr + "_" + valueCol.Field + "\"");
             }).ToList();
         }
 
@@ -220,14 +237,14 @@ namespace DataService.Helpers
 
         private List<string> getGroupColumns()
         {
-            groupKeys.Zip(rowGroups, (key, group) => group + " = '" + key + "'").ToList().ForEach(p=>Console.WriteLine(p));
+            groupKeys.Zip(rowGroups, (key, group) => group + " = '" + key + "'").ToList().ForEach(p => Console.WriteLine(p));
             return groupKeys.Zip(rowGroups, (key, group) => group + " = '" + key + "'").ToList();
         }
 
         private List<string> getRowGroups()
         {
 
-            return rowGroupCols.Select(ColumnVO => ColumnVO.getField()).ToList();
+            return rowGroupCols.Select(ColumnVO => ColumnVO.Field).ToList();
 
         }
 

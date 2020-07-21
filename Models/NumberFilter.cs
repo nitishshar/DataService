@@ -8,31 +8,27 @@ namespace DataService.Models
 
         public NumberColumnFilter() { }
 
-        public NumberColumnFilter(string type, int filter, int filterTo)
+        public NumberColumnFilter(string type, int filter, int filterTo, string filterType) : base(filterType)
         {
             this.type = type;
             this.filter = filter;
             this.filterTo = filterTo;
         }
-
-        public string getFilterType()
+        public string Type
         {
-            return this.filterType;
+            get { return this.type; }
+            set { this.type = value; }
+        }
+        public int Filter
+        {
+            get { return this.filter; }
+            set { this.filter = value; }
+        }
+        public int FilterTo
+        {
+            get { return this.filterTo; }
+            set { this.filterTo = value; }
         }
 
-        public string getType()
-        {
-            return type;
-        }
-
-        public int getFilter()
-        {
-            return filter;
-        }
-
-        public int getFilterTo()
-        {
-            return filterTo;
-        }
     }
 }

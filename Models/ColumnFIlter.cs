@@ -2,8 +2,23 @@ using System.Collections.Generic;
 
 namespace DataService.Models
 {
-    public abstract class ColumnFilter
+    public class ColumnFilter
     {
-        public string filterType;
+        private string filterType;
+        public ColumnFilter()
+        {
+
+        }
+        public ColumnFilter(string filterType)
+        {
+            this.filterType = filterType;
+        }
+
+        public string FilterType
+        {
+            get { return this.filterType; }
+            set { this.filterType = value; }
+        }
+
     }
 }

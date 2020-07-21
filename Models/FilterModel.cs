@@ -13,15 +13,10 @@ namespace DataService.Models
         {
             this.filterModel = filterModel;
         }
-
-        public Dictionary<string, ColumnFilter> getFilterModel()
+        public Dictionary<string, ColumnFilter> FilterModel
         {
-            return filterModel;
-        }
-
-        public void setFilterModel(Dictionary<string, ColumnFilter> filterModel)
-        {
-            this.filterModel = filterModel;
+            get { return this.filterModel; }
+            set { this.filterModel = value; }
         }
 
         public override string ToString()

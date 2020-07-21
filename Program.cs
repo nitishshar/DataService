@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text.Json;
 using DataService.Helpers;
 using DataService.Models;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System.Text.Json.Serialization;
 
 namespace DataService
 {
@@ -15,34 +13,37 @@ namespace DataService
     {
         public static void Main(string[] args)
         {
-            //CreateHostBuilder(args).Build().Run();
+
             var request = new Request();
-            request.setStartRow(0);
-            request.setEndRow(100);
-            request.setRowGroupCols(new List<ColumnVO>(){
-                new ColumnVO("COUNTRY", "Country", "COUNTRY", "")
-        }
-            );
-            request.setValueCols(new List<ColumnVO>(){
-                    new ColumnVO("GOLD", "Gold", "GOLD", "sum"),
-                    new ColumnVO("SILVER", "Silver", "SILVER", "sum"),
-                    new ColumnVO("BRONZE", "Bronze", "BRONZE", "sum"),
-                    new ColumnVO("TOTAL", "Total", "TOTAL", "sum")
-            });
-            request.setFilterModel(new Dictionary<string, ColumnFilter>() {
-            {"SPORT", new SetColumnFilter(new List<string>(){"Rowing", "Tennis"})},
-            {"AGE", new NumberColumnFilter("equals", 22, 26)}
-        });
-            request.setSortModel(new List<SortModel>() { new SortModel("ATHLETE", "asc") });
-            request.setPivotMode(true);
-            request.setPivotCols(new List<ColumnVO>(){
-                new ColumnVO("SPORT", "Sport", "SPORT", null)
-            });
+            request.StartRow = 0;
+            request.EndRow = 100;
+            request.RowGroupCols = new List<ColumnVO>(){
+                new ColumnVO("1", "Employee Number", "emp_no", ""),
+                new ColumnVO("2", "First Name", "first_name", ""),
+                 new ColumnVO("2", "last name", "last_name", "")
+            };
+
+            request.ValueCols = new List<ColumnVO>(){
+                    new ColumnVO("3", "Salary", "salary", "sum")
+            };
+            request.FilterModel = new Dictionary<string, ColumnFilter>() {
+            {"title", new SetColumnFilter(new List<string>(){"Senior Engineer","Staff"},"set")}
+            };
+            //request.setSortModel(new List<SortModel>() { new SortModel("first_name", "asc") });
+            request.PivotMode = true;
+            request.PivotCols = new List<ColumnVO>(){
+                new ColumnVO("4", "Title", "title", null)
+            };
+            //request.setGroupKeys(new List<string>(){"91966","220771"});
             Dictionary<String, List<String>> pivotValues = new Dictionary<string, List<string>>();
-            pivotValues.Add("SPORT", new List<string>() { "Athletics", "Speed Skating" });
-            pivotValues.Add("YEAR", new List<string>() {"2000", "2004"});
-            String sql = new SQLBuilder().CreateSQL(request, "medal", pivotValues);
+            pivotValues.Add("title", new List<string>() { "Senior Engineer", "Staff" });
+            pivotValues.Add("last_name", new List<string>() { "Facello", "Simmel" });
+
+            Console.WriteLine(JsonSerializer.Serialize<Request>(request));
+            String sql = new SQLBuilder().CreateSQL(request, "employeedetails", pivotValues);
             Console.WriteLine(sql);
+            CreateHostBuilder(args).Build().Run();
+
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

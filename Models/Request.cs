@@ -5,8 +5,8 @@ namespace DataService.Models
     public class Request
     {
 
-        private int startRow, endRow;
-
+        private int startRow;
+        private int endRow;
         // row group columns
         private List<ColumnVO> rowGroupCols;
 
@@ -20,13 +20,13 @@ namespace DataService.Models
         private bool pivotMode;
 
         // what groups the user is viewing
-        private List<string> groupKeys;
+        private List<string> groupKeys{ get; set; }
 
         // if filtering, what the filter model is
-        private Dictionary<string, ColumnFilter> filterModel;
+        private Dictionary<string, ColumnFilter> filterModel{ get; set; }
 
         // if sorting, what the sort model is
-        private List<SortModel> sortModel;
+        private List<SortModel> sortModel{ get; set; }
 
         public Request()
         {
@@ -38,94 +38,59 @@ namespace DataService.Models
             this.sortModel = new List<SortModel>();
         }
 
-        public int getStartRow()
+        public int StartRow
         {
-            return startRow;
+            get { return this.startRow; }
+            set { this.startRow = value; }
+        }     
+
+        public int EndRow
+        {
+            get { return this.endRow; }
+            set { this.endRow = value; }
         }
 
-        public void setStartRow(int startRow)
+        public List<ColumnVO> RowGroupCols
         {
-            this.startRow = startRow;
+            get { return this.rowGroupCols; }
+            set { this.rowGroupCols = value; }
+        }  
+
+        public List<ColumnVO> ValueCols
+        {
+           get { return this.valueCols; }
+            set { this.valueCols = value; }
+        }  
+        public List<ColumnVO> PivotCols
+        {
+            get { return this.pivotCols; }
+            set { this.pivotCols = value; }
+        }    
+
+        public bool PivotMode
+        {
+            get { return this.pivotMode; }
+            set { this.pivotMode = value; }
+        }
+    
+        public List<string> GroupKeys
+        {
+           get { return this.groupKeys; }
+            set { this.groupKeys = value; }
+        }       
+
+        public Dictionary<string, ColumnFilter> FilterModel
+        {
+            get { return this.filterModel; }
+            set { this.filterModel = value; }
         }
 
-        public int getEndRow()
+
+        public List<SortModel> SortModel
         {
-            return endRow;
+             get { return this.sortModel; }
+            set { this.sortModel = value; }
         }
 
-        public void setEndRow(int endRow)
-        {
-            this.endRow = endRow;
-        }
-
-        public List<ColumnVO> getRowGroupCols()
-        {
-            return rowGroupCols;
-        }
-
-        public void setRowGroupCols(List<ColumnVO> rowGroupCols)
-        {
-            this.rowGroupCols = rowGroupCols;
-        }
-
-        public List<ColumnVO> getValueCols()
-        {
-            return valueCols;
-        }
-
-        public void setValueCols(List<ColumnVO> valueCols)
-        {
-            this.valueCols = valueCols;
-        }
-
-        public List<ColumnVO> getPivotCols()
-        {
-            return pivotCols;
-        }
-
-        public void setPivotCols(List<ColumnVO> pivotCols)
-        {
-            this.pivotCols = pivotCols;
-        }
-
-        public bool isPivotMode()
-        {
-            return pivotMode;
-        }
-
-        public void setPivotMode(bool pivotMode)
-        {
-            this.pivotMode = pivotMode;
-        }
-
-        public List<string> getGroupKeys()
-        {
-            return groupKeys;
-        }
-
-        public void setGroupKeys(List<string> groupKeys)
-        {
-            this.groupKeys = groupKeys;
-        }
-
-        public Dictionary<string, ColumnFilter> getFilterModel()
-        {
-            return filterModel;
-        }
-
-        public void setFilterModel(Dictionary<string, ColumnFilter> filterModel)
-        {
-            this.filterModel = filterModel;
-        }
-
-        public List<SortModel> getSortModel()
-        {
-            return sortModel;
-        }
-
-        public void setSortModel(List<SortModel> sortModel)
-        {
-            this.sortModel = sortModel;
-        }
     }
 }

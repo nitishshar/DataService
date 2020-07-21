@@ -16,24 +16,18 @@ namespace DataService.Models
             this.sort = sort;
         }
 
-        public string getColId()
+
+        public string ColId
         {
-            return colId;
+            get { return this.colId; }
+            set { this.colId = value; }
         }
 
-        public void setColId(string colId)
-        {
-            this.colId = colId;
-        }
 
-        public string getSort()
+        public string Sort
         {
-            return sort;
-        }
-
-        public void setSort(string sort)
-        {
-            this.sort = sort;
+            get { return this.sort; }
+            set { this.sort = value; }
         }
 
         public override bool Equals(object obj)
@@ -50,7 +44,7 @@ namespace DataService.Models
 
         public override string ToString()
         {
-            return  "SortModel{" +
+            return "SortModel{" +
                     "colId='" + colId + '\'' +
                     ", sort='" + sort + '\'' +
                     '}';

@@ -2,49 +2,36 @@ using System.Collections.Generic;
 
 namespace DataService.Models
 {
-    public class EnterpriseGetRowsResponse
+    public class GetRowsResponse
     {
         private List<Dictionary<string, object>> data;
         private int lastRow;
         private List<string> secondaryColumnFields;
 
-        public EnterpriseGetRowsResponse() { }
+        public GetRowsResponse() { }
 
-        public EnterpriseGetRowsResponse(List<Dictionary<string, object>> data, int lastRow, List<string> secondaryColumnFields)
+        public GetRowsResponse(List<Dictionary<string, object>> data, int lastRow, List<string> secondaryColumnFields)
         {
             this.data = data;
             this.lastRow = lastRow;
             this.secondaryColumnFields = secondaryColumnFields;
         }
 
-        public List<Dictionary<string, object>> getData()
+        public List<Dictionary<string, object>> Data
         {
-            return data;
+            get { return this.data; }
+            set { this.data = value; }
+        }
+        public int LastRow
+        {
+            get { return this.lastRow; }
+            set { this.lastRow = value; }
         }
 
-        public void setData(List<Dictionary<string, object>> data)
+        public List<string> SecondaryColumnFields
         {
-            this.data = data;
-        }
-
-        public int getLastRow()
-        {
-            return lastRow;
-        }
-
-        public void setLastRow(int lastRow)
-        {
-            this.lastRow = lastRow;
-        }
-
-        public List<string> getSecondaryColumnFields()
-        {
-            return secondaryColumnFields;
-        }
-
-        public void setSecondaryColumns(List<string> secondaryColumnFields)
-        {
-            this.secondaryColumnFields = secondaryColumnFields;
+            get { return this.secondaryColumnFields; }
+            set { this.secondaryColumnFields = value; }
         }
     }
 }

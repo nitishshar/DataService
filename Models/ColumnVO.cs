@@ -21,45 +21,33 @@ namespace DataService.Models
             this.aggFunc = aggFunc;
         }
 
-        public string getId()
+        public string Id
         {
-            return id;
+            get { return this.id; }
+            set { this.id = value; }
         }
 
-        public void setId(string id)
+        public string DisplayName
         {
-            this.id = id;
+            get { return this.displayName; }
+            set { this.displayName = value; }
         }
 
-        public string getDisplayName()
+        public string Field
         {
-            return displayName;
+            get { return this.field; }
+            set { this.field = value; }
         }
 
-        public void setDisplayName(string displayName)
+
+        public string AggFunc
         {
-            this.displayName = displayName;
+            get { return this.aggFunc; }
+            set { this.aggFunc = value; }
         }
 
-        public string getField()
-        {
-            return field;
-        }
 
-        public void setField(string field)
-        {
-            this.field = field;
-        }
 
-        public string getAggFunc()
-        {
-            return aggFunc;
-        }
-
-        public void setAggFunc(string aggFunc)
-        {
-            this.aggFunc = aggFunc;
-        }
 
         public override bool Equals(object obj)
         {
