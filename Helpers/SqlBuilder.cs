@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using DataService.Models;
@@ -13,14 +14,14 @@ namespace DataService.Helpers
         private bool isGrouping;
         private List<ColumnVO> valueColumns;
         private List<ColumnVO> pivotColumns;
-        private Dictionary<string, ColumnFilter> filterModel;
+        private ConcurrentDictionary<string, ColumnFilter> filterModel;
         private List<SortModel> sortModel;
         private int startRow, endRow;
         private List<ColumnVO> rowGroupCols;
-        private Dictionary<string, List<string>> pivotValues;
+        private ConcurrentDictionary<string, List<string>> pivotValues;
         private bool isPivotMode;
 
-        public string CreateSQL(Request request, string tableName, Dictionary<string, List<string>> pivotValues)
+        public string CreateSQL(Request request, string tableName, ConcurrentDictionary<string, List<string>> pivotValues)
         {
             this.valueColumns = request.ValueCols;
             this.pivotColumns = request.PivotCols;
@@ -104,11 +105,15 @@ namespace DataService.Helpers
             return orderByCols.Count == 0 ? "" : " ORDER BY " + string.Join(",", orderByCols);
         }
 
-        private string limitSql()
+        private string limitSql(string dbName = "MYSQL")
         {
-            //for ORACLE return " OFFSET " + startRow + " ROWS FETCH NEXT " + (endRow - startRow + 1) + " ROWS ONLY";
-            // For MySQL
-            return " LIMIT " + startRow + " , " + (endRow - startRow);
+            return dbName switch
+            {
+                "ORACLE" => " OFFSET " + startRow + " ROWS FETCH NEXT " + (endRow - startRow + 1) + " ROWS ONLY",
+                "SQLSERVER" => " OFFSET " + startRow + " ROWS FETCH NEXT " + (endRow - startRow + 1) + " ROWS ONLY",
+                "MYSQL" => " LIMIT " + startRow + " , " + (endRow - startRow + 1),
+                _ => " LIMIT " + startRow + " , " + (endRow - startRow + 1)
+            };
         }
         public string createFilterSql(string key, dynamic item)
         {
@@ -211,21 +216,28 @@ namespace DataService.Helpers
             };
         }
 
-        private List<string> extractPivotStatements()
+        private List<string> extractPivotStatements(string func = "CASE")
         {
             List<IEnumerable<KeyValuePair<string, string>>> pivotPairs =
             pivotValues.Select(e => e.Value.ToList().Select(pivotValue => new KeyValuePair<string, string>(e.Key, pivotValue))).ToList();
 
             return pivotPairs.CartesianProduct().ToList().SelectMany(pairs =>
             {
-                string pivotColStr = string.Join("_", pairs.Select(pr => pr.Value));
-                string decodeStr = string.Join(",", pairs.Select(pair => "IF(" + pair.Key + ", '" + pair.Value + "'"));
+                string pivotColStr = string.Join("|", pairs.Select(pr => pr.Value));
+                string decodeStr = string.Empty;
+                string closingBrackets = string.Empty;
+                return func switch
+                {
+                    "IF" => valueColumns.Select(valueCol => valueCol.AggFunc + "(" + string.Join(",", pairs.Select(pair => "IF(" + pair.Key + " = '" + pair.Value + "'")) + ", " + valueCol.Field +
+                           string.Join("", Enumerable.Range(0, pairs.Count()).Select(i => ",0)")) + ") \"" + pivotColStr + "|" + valueCol.Field + "\""),
+                    "CASE" => valueColumns.Select(valueCol => valueCol.AggFunc + "(" + string.Join(" ", pairs.Select(pair => "(CASE WHEN " + pair.Key + " = '" + pair.Value + "' THEN")) + " " + valueCol.Field +
+                           string.Join("", Enumerable.Range(0, pairs.Count()).Select(i => " END )")) + ") \"" + pivotColStr + "|" + valueCol.Field + "\""),
+                    "DECODE" => valueColumns.Select(valueCol => valueCol.AggFunc + "(" + string.Join(",", pairs.Select(pair => "DECODE(" + pair.Key + ", '" + pair.Value + "'")) + ", " + valueCol.Field +
+                            string.Join("", Enumerable.Range(0, pairs.Count() + 1).Select(i => ")")) + " \"" + pivotColStr + "|" + valueCol.Field + "\""),
+                    _ => valueColumns.Select(valueCol => valueCol.AggFunc + "(" + string.Join(" ", pairs.Select(pair => "(CASE WHEN " + pair.Key + " = '" + pair.Value + "' THEN")) + " " + valueCol.Field +
+                           string.Join("", Enumerable.Range(0, pairs.Count()).Select(i => " END )")) + ") \"" + pivotColStr + "|" + valueCol.Field + "\"")
+                };
 
-                string closingBrackets = string.Join("", Enumerable.Range(0, pairs.Count() + 1).Select(i => ")"));
-
-
-                return valueColumns.Select(valueCol => valueCol.AggFunc + "(" + decodeStr + ", " + valueCol.Field +
-                                closingBrackets + " \"" + pivotColStr + "_" + valueCol.Field + "\"");
             }).ToList();
         }
 

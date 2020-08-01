@@ -1,10 +1,12 @@
 using System.Collections.Generic;
-using System.Data.Odbc;
 using System.Linq;
 using System.Threading.Tasks;
 using DataService.Helpers;
 using DataService.Models;
 using System;
+using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
+
 namespace DataService.Domain
 {
     public class PivotServiceApi
@@ -12,14 +14,18 @@ namespace DataService.Domain
         private const string tableName = "employeedetails";
 
         internal DBConnector Db { get; set; }
+
+        private IMemoryCache _memoryCache;
+
         private SQLBuilder queryBuilder { get; set; }
         public PivotServiceApi()
         {
         }
 
-        internal PivotServiceApi(DBConnector db)
+        internal PivotServiceApi(DBConnector db, IMemoryCache memoryCache)
         {
             Db = db;
+            _memoryCache = memoryCache;
             queryBuilder = new SQLBuilder();
         }
 
@@ -27,13 +33,14 @@ namespace DataService.Domain
         {
 
             using var cmd = Db.Connection.CreateCommand();
-            var pivotValues = new Dictionary<string, List<string>>();
+            var pivotValues = new ConcurrentDictionary<string, List<string>>();
             if (request.PivotMode)
             {
                 string whereSQl = queryBuilder.WhereSQL(request, tableName);
                 Console.WriteLine(whereSQl);
                 pivotValues = await getPivotValues(request.PivotCols, whereSQl);
             }
+            Console.WriteLine(string.Join(",", pivotValues.Keys) + "test");
             string sql = queryBuilder.CreateSQL(request, tableName, pivotValues);
             cmd.CommandText = sql;
             Console.WriteLine(request);
@@ -49,28 +56,33 @@ namespace DataService.Domain
                 return null;
             }
         }
-        private async Task<Dictionary<string, List<string>>> getPivotValues(List<ColumnVO> pivotCols, string where = "")
+        private async Task<ConcurrentDictionary<string, List<string>>> getPivotValues(List<ColumnVO> pivotCols, string where = "")
         {
             var pivotColumns = pivotCols.Select(column => column.Field).ToList();
-            Dictionary<string, List<string>> results = new Dictionary<string, List<string>>();
-            await pivotColumns.ForEachAsync(async column =>
-             {
-                 var values = await this.getPivotValues(column, where);
-                 results.Add(column, values);
-
-             });
+            ConcurrentDictionary<string, List<string>> results = new ConcurrentDictionary<string, List<string>>();
+            await pivotColumns.ParallelForEachAsync((column) => this.getPivotValues(column, where).ContinueWith(res => results.GetOrAdd(column, res.Result)));
             return results;
         }
 
         private async Task<List<string>> getPivotValues(string pivotColumn, string where = "")
         {
+            List<string> results = new List<string>();
             string sql = string.Format("SELECT DISTINCT {0} FROM {1} {2}", pivotColumn, tableName, where);
-            using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = sql;
-            Console.WriteLine(sql);
-            return await ListExtensions.ReadDistinctAsync(await cmd.ExecuteReaderAsync());
+            if (!_memoryCache.TryGetValue(sql, out results))
+            {
+                using var cmd = Db.Connection.CreateCommand();
+                cmd.CommandText = sql;
+                Console.WriteLine(sql);
+                results = await ListExtensions.ReadDistinctAsync(await cmd.ExecuteReaderAsync());
+                Console.WriteLine(string.Join(",", results));
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromHours(4));
+                if (results.Count > 0)
+                {
+                    _memoryCache.Set(sql, results, cacheEntryOptions);
+                }
+            }
+            return results;
         }
-
-
     }
 }

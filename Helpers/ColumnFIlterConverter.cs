@@ -11,8 +11,8 @@ namespace DataService.Helpers
             {
                 // map string values to types
                 nameof(SetColumnFilter) => typeof(SetColumnFilter),
-                nameof(NumberColumnFilter) => typeof(NumberColumnFilter)
-                
+                nameof(NumberColumnFilter) => typeof(NumberColumnFilter),
+                _ => typeof(ColumnFilter)
                 // TODO: Create a case for each derived type
             };
         }
@@ -22,7 +22,7 @@ namespace DataService.Helpers
             // map types to string values
             if (type == typeof(SetColumnFilter)) return nameof(SetColumnFilter);
             if (type == typeof(NumberColumnFilter)) return nameof(NumberColumnFilter);
-            return "";
+            return nameof(ColumnFilter);
             // TODO: Create a condition for each derived type
         }
     }

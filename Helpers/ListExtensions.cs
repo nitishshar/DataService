@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Data.Odbc;
-using System.Dynamic;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Data;
 using System.Data.Common;
+using System.Collections.Concurrent;
 
 namespace DataService.Helpers
 {
@@ -118,6 +116,28 @@ namespace DataService.Helpers
         {
             return (await Task.WhenAll(enumeration.Select(func))).SelectMany(s => s);
         }
+        public static List<(T item, int index)> WithIndex<T>(this IEnumerable<T> source)
+        {
+            return source.Select((item, index) => (item, index)).ToList();
+        }
+        public static Task ParallelForEachAsync<T>(this IEnumerable<T> source, Func<T, Task> funcBody, int maxDoP = 4)
+        {
+            async Task AwaitPartition(IEnumerator<T> partition)
+            {
+                using (partition)
+                {
+                    while (partition.MoveNext())
+                    { await funcBody(partition.Current); }
+                }
+            }
+
+            return Task.WhenAll(
+                Partitioner
+                    .Create(source)
+                    .GetPartitions(maxDoP)
+                    .AsParallel()
+                    .Select(p => AwaitPartition(p)));
+        }
         public async static Task<List<Dictionary<string, object>>> ReadAsync(DbDataReader reader)
         {
             var res = new List<Dictionary<string, object>>();
@@ -129,7 +149,7 @@ namespace DataService.Helpers
                     var columns = new List<string>();
                     foreach (DataRow row in schemaTable.Rows)
                     {
-                        columns.Add(row[0].ToString());
+                        columns.Add(row[0] != DBNull.Value ? row[0].ToString() : "");
                     }
                     while (await reader.ReadAsync())
                     {
@@ -159,5 +179,6 @@ namespace DataService.Helpers
                 return res;
             }
         }
+
     }
 }

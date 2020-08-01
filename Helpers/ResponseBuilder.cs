@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using DataService.Models;
@@ -9,7 +10,7 @@ namespace DataService.Helpers
         public static GetRowsResponse createResponse(
             Request request,
             List<Dictionary<string, object>> rows,
-            Dictionary<string, List<string>> pivotValues)
+            ConcurrentDictionary<string, List<string>> pivotValues)
         {
 
             int currentLastRow = request.StartRow + rows.Count;
@@ -20,7 +21,7 @@ namespace DataService.Helpers
             return new GetRowsResponse(rows, lastRow, getSecondaryColumns(pivotValues, valueColumns));
         }
 
-        private static List<string> getSecondaryColumns(Dictionary<string, List<string>> pivotValues, List<ColumnVO> valueColumns)
+        private static List<string> getSecondaryColumns(ConcurrentDictionary<string, List<string>> pivotValues, List<ColumnVO> valueColumns)
         {
             List<IEnumerable<KeyValuePair<string, string>>> pivotPairs = pivotValues.Select(e => e.Value.ToList().Select(pivotValue => new KeyValuePair<string, string>(e.Key, pivotValue))).ToList();
    

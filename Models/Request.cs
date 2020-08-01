@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace DataService.Models
@@ -23,7 +24,7 @@ namespace DataService.Models
         private List<string> groupKeys{ get; set; }
 
         // if filtering, what the filter model is
-        private Dictionary<string, ColumnFilter> filterModel{ get; set; }
+        private ConcurrentDictionary<string, ColumnFilter> filterModel{ get; set; }
 
         // if sorting, what the sort model is
         private List<SortModel> sortModel{ get; set; }
@@ -34,7 +35,7 @@ namespace DataService.Models
             this.valueCols = new List<ColumnVO>();
             this.pivotCols = new List<ColumnVO>();
             this.groupKeys = new List<string>();
-            this.filterModel = new Dictionary<string, ColumnFilter>();
+            this.filterModel = new ConcurrentDictionary<string, ColumnFilter>();
             this.sortModel = new List<SortModel>();
         }
 
@@ -79,7 +80,7 @@ namespace DataService.Models
             set { this.groupKeys = value; }
         }       
 
-        public Dictionary<string, ColumnFilter> FilterModel
+        public ConcurrentDictionary<string, ColumnFilter> FilterModel
         {
             get { return this.filterModel; }
             set { this.filterModel = value; }
